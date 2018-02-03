@@ -1,0 +1,51 @@
+<html>
+	<head>
+		<script src="https://cdn.jsdelivr.net/npm/d3@4.13.0/build/d3.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+	</head>
+	<body>
+		<div id="demo">
+			<svg width="550" height="200" style="background:white"></svg>
+		</div>
+		<script type="text/javascript">
+			var jObj = jStat();
+			var x = jStat.seq( -1, 1, 50);
+			var y = jStat(x).normal(0, 0.5).pdf();
+			var data = x.map(function(value, index){
+				return [value, y[0][index]];
+			});
+			var xScale = d3.scaleLinear().range([0, 550]);
+			var yScale = d3.scaleLinear().range([200, 0]);
+			var line = d3.line()
+			.x(function(d) {
+				return xScale(d[0]);
+			})
+			.y(function(d) {
+				return yScale(d[1]);
+			});
+			xScale.domain(d3.extent(data, function(d) {
+				return d[0];
+			}));
+			yScale.domain(d3.extent(data, function(d) {
+				return d[1];
+			}));
+			var svg = d3.select("#demo svg");
+			svg.append("path")
+				.datum(data)
+				.attr("class", "line")
+				.attr("d", line);
+			function updateData() {
+				var variance = document.getElementById("variance");
+				variance = parseFloat(variance.value);
+				var x = jStat.seq( -1, 1, 50);
+				var y = jStat(x).normal(0, variance).pdf();
+				data = x.map(function(value, index){
+					return [value, y[0][index]];
+				});
+				var svg = d3.select("#demo svg").transition().select(".line").duration(750).attr("d", line(data));
+			}
+		</script>
+		
+		<input id="variance" type="text" onchange="updateData();"></text>
+	</body>
+</html>
