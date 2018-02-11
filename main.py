@@ -1,6 +1,9 @@
+import numpy as np
+import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from numpy.random import normal
+from words import common_words_100
 
 keys_per_row = ["qwertyuiop[]", "asdfghjkl;'", "zxcvbnm,./", " "]
 key_width = 5
@@ -28,12 +31,38 @@ def squared_distance_to_keys(keyboard, microphone):
 
     for key, positions in keyboard.items():
         key_x, key_y = positions
-        distance[key] = (mic_x - key_x) ** 2 + (mic_y - key_y) ** 2
+        distance[key] = math.sqrt((mic_x - key_x) ** 2 + (mic_y - key_y) ** 2)
 
     return distance
 
 
-def acoustic_model(text, keyboard, microphone):
+def gaussian_intersections(keyboard, microphone):
+    intersections = {}
+    distances = squared_distance_to_keys(keyboard, microphone)
+    keys = keyboard.keys()
+    keys = sorted(keys, key=lambda elem: distances[elem])
+
+    for index, key in enumerate(keys):
+        key_distance = distances[key]
+
+        if index == 0:
+            left_most = None
+        else:
+            nearest_left = distances[keys[index - 1]]
+            left_most = (key_distance ** 2 - nearest_left ** 2) / (2 * (key_distance - nearest_left))
+
+        if index == len(keys) - 1:
+            right_most = None
+        else:
+            nearest_right = distances[keys[index + 1]]
+            right_most = (key_distance ** 2 - nearest_right ** 2) / (2 * (key_distance - nearest_right))
+
+        intersections[key] = (key_distance, left_most, right_most)
+
+    return intersections
+
+
+def acoustic_model_observations(text, keyboard, microphone):
     distance = squared_distance_to_keys(keyboard, microphone)
     observations = []
 
@@ -44,10 +73,49 @@ def acoustic_model(text, keyboard, microphone):
     return observations
 
 
+def probability_of_error_acoustic_model(keyboard, microphone):
+    letter_success = {}
+    average_error_probability = 0
+    intersections = gaussian_intersections(keyboard, microphone)
+    scaling_factor = 1/(2 * math.sqrt(2) * math.sqrt(key_observation_variance))
+
+    for word in common_words_100:
+        total_error_probability = 1
+
+        for letter in word:
+            letter = letter.lower()
+            if letter not in letter_success:
+                letter_distance, left_inter, right_inter = intersections[letter]
+
+                if left_inter:
+                    left_point = (left_inter - letter_distance) / (2 * scaling_factor)
+
+                if right_inter:
+                    right_point = (right_inter - letter_distance) / (2 * scaling_factor)
+
+                if left_inter and right_inter:
+                    success_probability = scaling_factor * (math.erf(right_point) - math.erf(left_point))
+                elif right_inter and not left_inter:
+                    success_probability = 0.5 + (scaling_factor * math.erf(right_point))
+                elif left_inter and not right_inter:
+                    success_probability = 0.5 + (-scaling_factor * math.erf(left_point))
+                else:
+                    success_probability = 1  # this should never happen
+
+                letter_success[letter] = success_probability
+
+            total_error_probability *= letter_success[letter]
+
+        average_error_probability += total_error_probability
+
+    return average_error_probability / float(len(common_words_100))
+
+
 if __name__ == '__main__':
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111, aspect='equal')
     keyboard = construct_keyboard(keys_per_row)
+    microphone = (40, 20)
 
     ax2.set_xlim(-50, 50)
     ax2.set_ylim(-50, 50)
@@ -65,4 +133,21 @@ if __name__ == '__main__':
         )
         ax2.text(x + 1.2, y + 1, key)
 
+    circle = plt.Circle(microphone, 3, color='r')
+    #ax2.add_artist(circle)
+
+    #plt.show()
+
+    image = np.zeros((100, 100))
+
+    for x in range(image.shape[1]):
+        for y in range(image.shape[0]):
+            x_coord = -50 + x
+            y_coord = 50 - y
+            try:
+                image[x, y] = probability_of_error_acoustic_model(keyboard, (x_coord, y_coord))
+            except:
+                image[x, y] = 0.0
+
+    ax2.imshow(image, extent=(-50, 50, -50, 50), interpolation="bilinear")
     plt.show()
