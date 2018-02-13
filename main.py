@@ -9,6 +9,7 @@ keys_per_row = ["qwertyuiop[]", "asdfghjkl;'", "zxcvbnm,./", " "]
 key_width = 5
 key_spacing = 0.3
 key_observation_variance = 0.5
+initial_amplitude = 10
 
 
 def construct_keyboard(keys_per_row):
@@ -31,7 +32,7 @@ def squared_distance_to_keys(keyboard, microphone):
 
     for key, positions in keyboard.items():
         key_x, key_y = positions
-        distance[key] = math.sqrt((mic_x - key_x) ** 2 + (mic_y - key_y) ** 2)
+        distance[key] = initial_amplitude / ((mic_x - key_x) ** 2 + (mic_y - key_y) ** 2)
 
     return distance
 
@@ -106,7 +107,7 @@ def probability_of_error_acoustic_model(keyboard, microphone):
 
             total_error_probability *= letter_success[letter]
 
-        average_error_probability += total_error_probability
+        average_error_probability += math.log(total_error_probability)
 
     return average_error_probability / float(len(common_words_100))
 
@@ -116,9 +117,35 @@ if __name__ == '__main__':
     ax2 = fig2.add_subplot(111, aspect='equal')
     keyboard = construct_keyboard(keys_per_row)
     microphone = (40, 20)
+    left_extent = -100
+    right_extent = 100
 
-    ax2.set_xlim(-50, 50)
-    ax2.set_ylim(-50, 50)
+    ax2.set_xlim(left_extent, right_extent)
+    ax2.set_ylim(left_extent, right_extent)
+
+    circle = plt.Circle(microphone, 3, color='r')
+    #ax2.add_artist(circle)
+
+    #plt.show()
+
+    image = np.zeros((2 * right_extent, 2 * right_extent))
+
+    for x in range(image.shape[1]):
+        for y in range(image.shape[0]):
+            x_coord = left_extent + x
+            y_coord = right_extent - y
+            value = 0.0
+
+            try:
+                value = probability_of_error_acoustic_model(keyboard, (x_coord, y_coord))
+            except Exception:
+                value = -35.99344250211817
+
+            image[y, x] = value
+    print(image.max())
+    image *= 255 - (255.0 * image.max())
+    ax2.imshow(image, extent=[left_extent, right_extent, left_extent, right_extent])
+
 
     for key, position in keyboard.items():
         x, y = position
@@ -128,26 +155,10 @@ if __name__ == '__main__':
                 (x, y),
                 key_width if key != " " else 9.5 * key_width,
                 key_width,
-                fill=False
+                edgecolor="black",
+                facecolor="white"
             )
         )
         ax2.text(x + 1.2, y + 1, key)
 
-    circle = plt.Circle(microphone, 3, color='r')
-    #ax2.add_artist(circle)
-
-    #plt.show()
-
-    image = np.zeros((100, 100))
-
-    for x in range(image.shape[1]):
-        for y in range(image.shape[0]):
-            x_coord = -50 + x
-            y_coord = 50 - y
-            try:
-                image[x, y] = probability_of_error_acoustic_model(keyboard, (x_coord, y_coord))
-            except:
-                image[x, y] = 0.0
-
-    ax2.imshow(image, extent=(-50, 50, -50, 50), interpolation="bilinear")
     plt.show()
