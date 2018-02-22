@@ -117,8 +117,8 @@ if __name__ == '__main__':
     ax2 = fig2.add_subplot(111, aspect='equal')
     keyboard = construct_keyboard(keys_per_row)
     microphone = (40, 20)
-    left_extent = -100
-    right_extent = 100
+    left_extent = -50
+    right_extent = 50
 
     ax2.set_xlim(left_extent, right_extent)
     ax2.set_ylim(left_extent, right_extent)
@@ -145,7 +145,6 @@ if __name__ == '__main__':
     print(image.max())
     image *= 255 - (255.0 * image.max())
     ax2.imshow(image, extent=[left_extent, right_extent, left_extent, right_extent])
-
 
     for key, position in keyboard.items():
         x, y = position
