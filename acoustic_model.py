@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from scipy.stats import norm
 
-key_observation_variance = 0.1
+key_observation_variance = 0.3
 central_frequencies = range(13)
 frequency_groups = [norm(loc=mean, scale=key_observation_variance) for mean in central_frequencies]
 

@@ -9,11 +9,11 @@ def cost_func(symbol, previous_symbol, observation, posterior):
     if previous_symbol is None:
         amplitude_likelihood *= letter_probability[symbol]
     else:
-        # letters = letter_probability.keys()
-        # sum = 0
-        # for letter in letters:
-        #     sum += bigram_probability[previous_symbol + letter]
-        amplitude_likelihood *= (bigram_probability[previous_symbol + symbol] / letter_probability[previous_symbol])
+        letters = letter_probability.keys()
+        sum = 0
+        for letter in letters:
+            sum += bigram_probability[previous_symbol + letter]
+        amplitude_likelihood *= (bigram_probability[previous_symbol + symbol] / sum)
 
     return amplitude_likelihood
 
