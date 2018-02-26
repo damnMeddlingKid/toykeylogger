@@ -1,38 +1,25 @@
 from __future__ import unicode_literals
 from scipy.stats import norm
-from numpy.random import normal
-from math import sqrt
 
-initial_amplitude = 10
-key_observation_variance = 3
-factor = 0.001
+key_observation_variance = 0.1
+central_frequencies = range(13)
+frequency_groups = [norm(loc=mean, scale=key_observation_variance) for mean in central_frequencies]
 
 
-def observed_mean_amplitude(keyboard, microphone):
-    mic_x, mic_y = microphone
-    amplitude = {}
-
-    for key, positions in keyboard.items():
-        key_x, key_y = positions
-        amplitude[key] = initial_amplitude / (sqrt((mic_x - key_x) ** 2 + (mic_y - key_y) ** 2) * factor) ** 2
-
-    return amplitude
-
-
-def posterior_amplitude(keyboard, microphone):
-    mean_amplitudes = observed_mean_amplitude(keyboard, microphone)
+def posterior_frequency(keyboard):
     pdfs = {}
-    for key, mean in mean_amplitudes.items():
-        pdfs[key] = norm(loc=mean, scale=key_observation_variance).pdf
+    for key, _ in keyboard.items():
+        idx = ord(key) % len(frequency_groups)
+        pdfs[key] = frequency_groups[idx]
     return pdfs
 
 
-def acoustic_model_observations(text, keyboard, microphone):
-    amplitudes = observed_mean_amplitude(keyboard, microphone)
+def acoustic_model_observations(text, keyboard):
     observations = []
+    key_frequencies = posterior_frequency(keyboard)
 
     for letter in text:
-        sample = normal(amplitudes[letter], key_observation_variance)
+        sample = key_frequencies[letter].rvs(size=1, random_state=10)[0]
         observations.append(sample)
 
     return observations

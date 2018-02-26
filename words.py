@@ -30,7 +30,7 @@ common_words_100 = [
     "him",
     "his",
     "how",
-    "I",
+    "i",
     "if",
     "in",
     "into",
