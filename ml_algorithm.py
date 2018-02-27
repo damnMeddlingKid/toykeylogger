@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from acoustic_model import posterior_frequency
 from letter_frequencies import  letter_probability
 

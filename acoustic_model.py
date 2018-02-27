@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from scipy.stats import norm
 
 key_observation_variance = 0.3
@@ -8,8 +7,9 @@ frequency_groups = [norm(loc=mean, scale=key_observation_variance) for mean in c
 
 def posterior_frequency(keyboard):
     pdfs = {}
-    for key, _ in keyboard.items():
-        idx = ord(key) % len(frequency_groups)
+    letter = "qwertyuiopasdfghjklzxcvbnm"
+    for index, key in enumerate(letter):
+        idx = index % len(frequency_groups)
         pdfs[key] = frequency_groups[idx]
     return pdfs
 

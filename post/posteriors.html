@@ -1,0 +1,65 @@
+<html>
+	<head>
+		<link href="https://cdn.jsdelivr.net/npm/c3@0.4.21/c3.min.css" rel="stylesheet">
+		<script src="https://cdn.jsdelivr.net/npm/d3@3.5.7/d3.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/c3@0.4.21/c3.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+	</head>
+	<body>
+		<div id="posteriors"></div>
+		<script type="text/javascript">
+			function generate_posteriors() {
+				var num_groups = 13;
+				var keys = "qwertyuiopasdfghjklzxcvbnm";
+				var xValues = new Array(num_groups);
+				var posteriors = new Array(num_groups);
+				var legend = new Array(num_groups);
+				var cf = 1;
+
+				for(var i=0; i<num_groups; i++) {
+					xValues[i] = jStat.seq(cf - 2, cf + 2, 40);
+					posteriors[i] = jStat(xValues[i]).normal(cf, 0.3).pdf()[0];
+					cf += 1;
+				}
+
+				for(var i=0; i<keys.length; i++) {
+					index = i % num_groups;
+					if(legend[index]) {
+						legend[index] += ', ' + keys.charAt(i);
+					} else {
+						legend[index] = keys.charAt(i);
+					}
+				}
+
+				return [xValues, posteriors, legend]
+			}
+
+			var raw_data = generate_posteriors()
+			var posterior_data = {xs: {}, columns: [], type:'area-spline'}
+
+			for(var i=0; i<raw_data[1].length; i++) {
+				xValues = raw_data[0][i]
+				posterior = raw_data[1][i];
+				legend = raw_data[2][i];
+				xValues.unshift('x' + i)
+				posterior.unshift(legend);
+				posterior_data['xs'][legend] = xValues[0];
+				posterior_data['columns'].push(posterior);
+				posterior_data['columns'].push(xValues);
+			}
+
+
+			var posteriors = c3.generate({
+			    interaction: {
+			        enabled: false
+			    },
+				bindto: '#posteriors',
+				data: posterior_data,
+				point: {
+			        show: false
+			    }
+			});
+
+		</script>
+    </body>
+</html>

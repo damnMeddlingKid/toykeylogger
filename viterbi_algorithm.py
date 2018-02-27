@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from letter_frequencies import bigram_probability, letter_probability
 from acoustic_model import posterior_frequency
 
