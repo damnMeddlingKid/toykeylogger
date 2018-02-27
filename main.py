@@ -32,10 +32,11 @@ if __name__ == '__main__':
     ml_average = 0
     bf_average = 0
 
-    for word in common_words_100[:20]:
+    for word in common_words_100:
         viterbi_probaility = 0
         ml_probability = 0
         bf_probability = 0
+
         for x in range(num_samples):
             observations = acoustic_model_observations(word, keyboard)
             viterbi_message = viterbi_algorithm.optimal_sequence(observations, keyboard)
