@@ -32,30 +32,43 @@ if __name__ == '__main__':
     ml_average = 0
     bf_average = 0
 
-    for word in common_words_100:
-        viterbi_probaility = 0
-        ml_probability = 0
-        bf_probability = 0
+    # for word in common_words_100[8:]:
+    #     viterbi_probaility = 0
+    #     ml_probability = 0
+    #     bf_probability = 0
+    #
+    #     for x in range(num_samples):
+    #         observations = acoustic_model_observations(word, keyboard)
+    #         viterbi_message = ("foo", 0.0) #viterbi_algorithm.optimal_sequence(observations, keyboard)
+    #         ml_message = ("foo", 0.0) #ml_algorithm.optimal_sequence(observations, keyboard)
+    #         bf_message = brute_force_algorithm.optimal_sequence(observations, keyboard)
+    #
+    #         if viterbi_message[0] == word:
+    #             viterbi_probaility += 1
+    #
+    #         if ml_message[0] == word:
+    #             ml_probability += 1
+    #
+    #         if bf_message[0] == word:
+    #             bf_probability += 1
+    #
+    #         print("actual: {}, viterbi: {}, ml: {}, bf: {}".format(word, viterbi_message[0], ml_message[0], bf_message[0]))
+    #
+    #     viterbi_average += viterbi_probaility / float(num_samples)
+    #     ml_average += ml_probability / float(num_samples)
+    #     bf_average += bf_probability / float(num_samples)
 
-        for x in range(num_samples):
-            observations = acoustic_model_observations(word, keyboard)
-            viterbi_message = viterbi_algorithm.optimal_sequence(observations, keyboard)
-            ml_message = ml_algorithm.optimal_sequence(observations, keyboard)
-            bf_message = brute_force_algorithm.optimal_sequence(observations, keyboard)
+    def foo(word):
+        observations = acoustic_model_observations(word, keyboard)
+        return brute_force_algorithm.optimal_sequence(observations, keyboard)
 
-            if viterbi_message[0] == word:
-                viterbi_probaility += 1
+    from joblib import Parallel, delayed
+    import multiprocessing
 
-            if ml_message[0] == word:
-                ml_probability += 1
+    num_cores = multiprocessing.cpu_count()
 
-            if bf_message[0] == word:
-                bf_probability += 1
+    results = Parallel(n_jobs=num_cores)(delayed(foo)(word) for word in common_words_100)
 
-            print("actual: {}, viterbi: {}, ml: {}, bf: {}".format(word, viterbi_message[0], ml_message[0], bf_message[0]))
-
-        viterbi_average += viterbi_probaility / float(num_samples)
-        ml_average += ml_probability / float(num_samples)
-        bf_average += bf_probability / float(num_samples)
+    print(results)
 
     print("map success: {} ml success: {} bf sucess: {}".format(viterbi_average/100.0, ml_average/100.0, bf_average/100.0))
